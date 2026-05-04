@@ -29,7 +29,7 @@ jwt-demo/
 ## Installation
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/nikmtl/jwt-demo
 cd jwt-demo
 npm install
 ```
