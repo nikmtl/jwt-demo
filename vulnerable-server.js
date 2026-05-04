@@ -40,8 +40,7 @@ app.get('/admin', (req, res) => {
   const token = authHeader.split(' ')[1]
 
   try {
-    // VERWUNDBAR: kein algorithms Parameter
-    const decoded = jwt.verify(token, SECRET)
+    const decoded = jwt.verify(token, SECRET, { algorithms: ['HS256', 'none'] }) // UNSICHER: Akzeptiert auch alg=none
 
     if (decoded.role !== 'admin') {
       return res.status(403).json({ error: 'Not an admin' })
