@@ -95,26 +95,37 @@ Response: { message: 'Welcome to the admin panel', user: 'alice' }
 
 [ATTACKING SECURE SERVER]
 Status: 401
-Response: { error: 'Invalid token: jwt algorithm is not allowed' }
+Response: { error: 'Invalid token: algorithm not allowed' }
 ```
 
 ---
 
 ## Der entscheidende Code-Unterschied
 
+Neuere Versionen von `jsonwebtoken` lehnen `alg:none` intern ab – selbst wenn es in der `algorithms`-Liste steht. Deshalb prüfen beide Server den Header **manuell**, bevor die Library ins Spiel kommt.
+
 **Verwundbar:**
 ```javascript
-// Server liest alg-Wert aus dem Token selbst → Angreifer kontrolliert diesen Wert
-const decoded = jwt.verify(token, SECRET)
+// Header wird manuell dekodiert – alg:none wird akzeptiert und Signatur ignoriert
+const header = JSON.parse(Buffer.from(parts[0], 'base64url').toString())
+if (header.alg === 'none') {
+  decoded = JSON.parse(Buffer.from(parts[1], 'base64url').toString()) // kein Verify!
+} else {
+  decoded = jwt.verify(token, SECRET, { algorithms: ['HS256'] })
+}
 ```
 
 **Sicher:**
 ```javascript
-// Server schreibt alg explizit vor → alg:none wird sofort abgelehnt
-const decoded = jwt.verify(token, SECRET, { algorithms: ['HS256'] })
+// Header wird manuell dekodiert – alg:none wird sofort abgelehnt
+const header = JSON.parse(Buffer.from(parts[0], 'base64url').toString())
+if (header.alg === 'none' || header.alg !== 'HS256') {
+  return res.status(401).json({ error: 'Invalid token: algorithm not allowed' })
+}
+decoded = jwt.verify(token, SECRET, { algorithms: ['HS256'] })
 ```
 
-Eine Zeile. Maximaler Unterschied.
+Die Schwachstelle liegt nicht in der Library – sie liegt darin, dem Angreifer zu erlauben, den `alg`-Wert selbst zu kontrollieren.
 
 ---
 

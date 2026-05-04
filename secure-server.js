@@ -37,7 +37,15 @@ app.get('/admin', (req, res) => {
   const token = authHeader.split(' ')[1]
 
   try {
-    // SICHER: algorithms explizit fixiert
+    const parts = token.split('.')
+    if (parts.length !== 3) return res.status(401).json({ error: 'Invalid token format' })
+
+    // SICHER: Header wird manuell geprüft, alg=none wird explizit abgelehnt
+    const header = JSON.parse(Buffer.from(parts[0], 'base64url').toString())
+    if (header.alg === 'none' || header.alg !== 'HS256') {
+      return res.status(401).json({ error: 'Invalid token: algorithm not allowed' })
+    }
+
     const decoded = jwt.verify(token, SECRET, { algorithms: ['HS256'] })
 
     if (decoded.role !== 'admin') {

@@ -40,7 +40,19 @@ app.get('/admin', (req, res) => {
   const token = authHeader.split(' ')[1]
 
   try {
-    const decoded = jwt.verify(token, SECRET, { algorithms: ['HS256', 'none'] }) // UNSICHER: Akzeptiert auch alg=none
+    const parts = token.split('.')
+    if (parts.length !== 3) return res.status(401).json({ error: 'Invalid token format' })
+
+    // UNSICHER: Header wird manuell geprüft, alg=none wird akzeptiert
+    const header = JSON.parse(Buffer.from(parts[0], 'base64url').toString())
+
+    let decoded
+    if (header.alg === 'none') {
+      // Signatur wird ignoriert – das ist die Schwachstelle
+      decoded = JSON.parse(Buffer.from(parts[1], 'base64url').toString())
+    } else {
+      decoded = jwt.verify(token, SECRET)
+    }
 
     if (decoded.role !== 'admin') {
       return res.status(403).json({ error: 'Not an admin' })
