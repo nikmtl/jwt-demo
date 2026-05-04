@@ -42,10 +42,12 @@ app.get('/admin', (req, res) => {
 
     // SICHER: Header wird manuell geprüft, alg=none wird explizit abgelehnt
     const header = JSON.parse(Buffer.from(parts[0], 'base64url').toString())
-    if (header.alg === 'none' || header.alg !== 'HS256') {
+    if (header.alg === 'none') {
+      // SICHER: alg=none wird explizit abgelehnt
       return res.status(401).json({ error: 'Invalid token: algorithm not allowed' })
     }
 
+    // SICHER: Algorithmus wird explizit auf HS256 beschränkt
     const decoded = jwt.verify(token, SECRET, { algorithms: ['HS256'] })
 
     if (decoded.role !== 'admin') {

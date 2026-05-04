@@ -14,7 +14,7 @@ const users = {
   admin: { password: 'admin456', role: 'admin' }
 }
 
-// Login Route - gibt JWT zurück
+// Login Route, gibt JWT zurück
 app.post('/login', (req, res) => {
   const { username, password } = req.body
   const user = users[username]
@@ -43,15 +43,16 @@ app.get('/admin', (req, res) => {
     const parts = token.split('.')
     if (parts.length !== 3) return res.status(401).json({ error: 'Invalid token format' })
 
-    // UNSICHER: Header wird manuell geprüft, alg=none wird akzeptiert
+    // UNSICHER: alg=none wird akzeptiert
     const header = JSON.parse(Buffer.from(parts[0], 'base64url').toString())
 
     let decoded
     if (header.alg === 'none') {
-      // Signatur wird ignoriert – das ist die Schwachstelle
+      // UNSICHER: Payload wird ohne Verifikation akzeptiert
       decoded = JSON.parse(Buffer.from(parts[1], 'base64url').toString())
-    } else {
-      decoded = jwt.verify(token, SECRET)
+    } else{
+      // UNSICHER: Algorithmus wird aus dem Header gelesen!
+      decoded = jwt.verify(token, SECRET, { algorithms: header.alg })
     }
 
     if (decoded.role !== 'admin') {
